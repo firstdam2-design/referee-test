@@ -3,124 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FIBA 심판 경기 운영 시뮬레이터 v4.0</title>
+    <title>FIBA 심판 트레이너 v4.3</title>
     <style>
         body { font-family: -apple-system, 'Malgun Gothic', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #121212; color: #ffffff; }
-        .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 92%; max-width: 500px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        /* PC 반응형 너비 조절 */
-        @media (min-width: 768px) {
-            .container { max-width: 700px; padding: 40px; }
-            h2 { font-size: 1.8rem !important; }
-            #box { font-size: 1.2rem !important; }
-        }
-
+        .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 92%; max-width: 550px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        @media (min-width: 768px) { .container { max-width: 750px; padding: 40px; } }
         .official-tag { color: #3498db; font-weight: bold; font-size: 1rem; margin-bottom: 10px; display: block; border-bottom: 1px solid #333; padding-bottom: 10px; }
         h2 { color: #f39c12; font-size: 1.4rem; margin: 10px 0; }
-        
-        #box { min-height: 200px; margin: 20px 0; padding: 20px; background: #262626; text-align: left; line-height: 1.8; font-size: 1.1rem; border-radius: 12px; border-left: 6px solid #f39c12; }
-        #answer-box { display: none; background: #2c3e50; padding: 20px; border-radius: 12px; text-align: left; font-size: 1rem; margin-bottom: 20px; border: 1px dashed #3498db; color: #ecf0f1; max-height: 350px; overflow-y: auto; }
-        
+        #box { min-height: 240px; margin: 20px 0; padding: 20px; background: #262626; text-align: left; line-height: 1.8; font-size: 1.1rem; border-radius: 12px; border-left: 6px solid #f39c12; }
+        #answer-box { display: none; background: #2c3e50; padding: 20px; border-radius: 12px; text-align: left; font-size: 1rem; margin-bottom: 20px; border: 1px dashed #3498db; color: #ecf0f1; max-height: 400px; overflow-y: auto; }
         .btn-group { display: flex; gap: 10px; flex-direction: column; }
         @media (min-width: 480px) { .btn-group { flex-direction: row; } }
-
         button { flex: 1; padding: 18px; font-size: 1.1rem; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.1s; background: #444; color: white; }
         .btn-main { background: #f39c12; color: white; }
         .btn-main:hover { background: #e67e22; }
         .btn-sub { background: #3498db; color: white; display: none; }
         .btn-sub:hover { background: #2980b9; }
         button:active { transform: scale(0.96); opacity: 0.9; }
-
         .highlight { color: #ff5555; font-weight: bold; }
         .possession { color: #2ecc71; font-weight: bold; }
         .step-title { color: #f1c40f; font-weight: bold; display: block; margin-top: 15px; border-left: 4px solid #f1c40f; padding-left: 10px; }
+        .team-info { background: #333; padding: 5px 12px; border-radius: 5px; font-size: 0.9rem; margin-bottom: 12px; display: inline-block; border: 1px solid #444; }
+        .spot-info { color: #9b59b6; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <span class="official-tag" id="off-display">v4.0 | 시스템 준비 완료</span>
-    <h2>🏀 경기 운영 마스터 트레이닝</h2>
-    <div id="box">버튼을 눌러 경기 상황을 생성하세요! <br>(PC/모바일 통합 디버깅 완료)</div>
+    <span class="official-tag" id="off-display">v4.3 | 실전 판정 집중 모드</span>
+    <h2>🏀 경기 운영 마스터</h2>
+    <div id="box">상황 발생 버튼을 눌러주세요! <br>(파울/바이얼레이션 빈도 상향)</div>
     <div id="answer-box"></div>
     <div class="btn-group">
-        <button type="button" class="btn-main" onclick="generateScenario()">상황 발생!</button>
-        <button type="button" id="ans-btn" class="btn-sub" onclick="showAnswer()">행동지침 확인</button>
+        <button type="button" class="btn-main" onclick="generate()">상황 발생!</button>
+        <button type="button" id="ans-btn" class="btn-sub" onclick="show()">행동지침 확인</button>
     </div>
 </div>
 
 <script>
-    // 전역 변수 설정
     let currentAns = "";
-
     const CONFIG = {
         colors: ["화이트", "블랙", "블루", "레드", "오렌지", "옐로"],
         players: ["4번", "7번", "11번", "23번", "30번"],
+        spots: ["오른쪽 45도 사이드라인", "왼쪽 베이스라인 부근", "자유투 라인 연장선 사이드라인", "하프라인 부근", "페인트존 정면"],
         positions: ["Crew Chief (주심)", "Umpire (부심)"],
         mechanics: ["Lead", "Trail"]
     };
 
-    function getRand(arr) {
-        return arr[Math.floor(Math.random() * arr.length)];
-    }
+    function getRand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-    function generateScenario() {
-        // 1. 기본 설정값 뽑기
+    function generate() {
         const role = getRand(CONFIG.positions);
         const mech = getRand(CONFIG.mechanics);
-        const tA = getRand(CONFIG.colors);
-        let tB = getRand(CONFIG.colors); while(tB === tA) { tB = getRand(CONFIG.colors); }
-        const pA = getRand(CONFIG.players);
+        const offense = getRand(CONFIG.colors); 
+        let defense = getRand(CONFIG.colors); while(defense === offense) { defense = getRand(CONFIG.colors); }
+        const pOff = getRand(CONFIG.players);
+        const pDef = getRand(CONFIG.players);
+        const spot = getRand(CONFIG.spots);
 
-        let situ = ""; 
-        let ans = "";
+        let situ = ""; let ans = "";
         const scenarioRand = Math.random();
 
-        // 2. 상황 분기 로직
-        if (scenarioRand < 0.2) { // [경기 전 & 점프볼]
-            situ = `[점프볼/경기 전] 경기 시작 직전입니다. 센터 서클에 양 팀 점퍼가 섰습니다. 당신은 <strong>${role}</strong>입니다.`;
-            ans = `<span class="step-title">① ${role}의 핵심 임무:</span>
-                   - ${role.includes('Chief') ? '센터 서클에서 공을 토스(Toss). 토스 전 점퍼 발 위치 확인.' : '본부석 맞은편 사이드라인 대기. 공이 터치되는 순간 시계 가동 시그널.'}<br>
-                   <span class="step-title">② 체크 포인트:</span>
-                   - 8명의 비점퍼가 센터 서클 밖으로 나갔는지 확인 후 토스 유도.`;
-        }
-        else if (scenarioRand < 0.4) { // [드로우인]
-            situ = `[드로우인] <strong>${tA}팀</strong>의 백코트 엔드라인 드로우인 상황입니다. 당신은 <strong>${mech}</strong> 심판입니다.`;
-            ans = `<span class="step-title">① ${mech}의 역할:</span>
-                   - ${mech === 'Lead' ? '드로우인 선수에게 볼 전달. 5초 카운트 시작.' : '공격 방향 전방으로 이동하며 8초 계시 준비 및 트레일링.'}<br>
-                   <span class="step-title">② 리포팅:</span>
-                   - "화이트 볼! 엔드라인!" 외치며 방향 지시 후 볼 전달.`;
-        }
-        else if (scenarioRand < 0.6) { // [L2M 경기 종료 직전]
-            situ = `[L2M/클러치] 4쿼터 종료 10초 전, 동점 상황! <strong>${tA}팀 ${pA}</strong>가 하프라인에서 드라이브인을 시도합니다. 당신은 <strong>${mech}</strong>입니다.`;
-            ans = `<span class="step-title">① 심판 메커니즘:</span>
-                   - 모든 접촉에 극도로 집중하되 'No-call' 원칙도 고려. 휘슬 시 시계 즉시 확인.<br>
-                   <span class="step-title">② ${mech}의 시선:</span>
-                   - ${mech === 'Lead' ? '림 근처 충돌(블록/차징) 판정.' : '슈터의 슛 동작 시작 지점 및 버저비터 여부 판정.'}`;
-        }
-        else { // [일반 파울/바이얼레이션]
-            const foulType = getRand(["푸싱", "홀딩", "트래블링", "더블 드리블"]);
-            situ = `[경기 중] <strong>${tA}팀 ${pA}</strong>가 ${tB}팀 선수와 경합 중 <span class="highlight">${foulType}</span>을(를) 범했습니다. 당신은 <strong>${mech}</strong>입니다.`;
-            ans = `<span class="step-title">① 현장 시그널:</span>
-                   - 즉시 주먹/손바닥 들고 시계 정지! <span class="possession">${tB}팀 방향</span> 지시.<br>
-                   <span class="step-title">② 본부석 리포팅:</span>
-                   - "${tA} ${pA}, ${foulType}! <span class="possession">${tB}볼!</span>" (해당 방향을 가리킴)`;
-        }
+        const infoHeader = `<div class="team-info">공격: <strong>${offense}</strong> | 수비: <strong>${defense}</strong></div><br>`;
 
-        // 3. 화면 업데이트
-        document.getElementById('off-display').innerText = `v4.0 | 배정: ${role} / ${mech}`;
-        document.getElementById('box').innerHTML = situ;
-        document.getElementById('answer-box').style.display = "none";
-        document.getElementById('ans-btn').style.display = "block";
-        currentAns = ans;
-    }
+        // --- 확률 분포 조정 ---
+        // 0.0 ~ 0.45: 일반 파울 (45%)
+        // 0.45 ~ 0.8: 바이얼레이션 (35%)
+        // 0.8 ~ 1.0: 경기 운영/특수 상황 (20%)
 
-    function showAnswer() {
-        const aBox = document.getElementById('answer-box');
-        aBox.innerHTML = currentAns;
-        aBox.style.display = "block";
-        document.getElementById('ans-btn').style.display = "none";
-    }
-</script>
-</body>
-</html>
+        if (scenarioRand < 0.45) { // 1. 일반 파울 및 슛 파울 (빈도 높음)
+            const isShootFoul = Math.random() > 0.7;
+            const foul = getRand(["푸싱", "홀딩", "핸드체크", "블로킹"]);
+            
+            if(isShootFoul) {
+                const isMade = Math.random() > 0.5;
+                situ = infoHeader + `[슛 파울] <span class="spot-info">골밑</span>에서 수비 중인 <strong>${defense}팀 ${pDef}</strong>가 슛 시도 중인 ${offense}팀 ${pOff}에게 <span class="highlight">반칙</span>! 결과는 ${isMade ? '성공' : '실패'}! 당신은 <strong>${mech}</strong>입니다.`;
+                ans = `<span class="step-title">① 현장 시그널:</span>
+                       - 주먹 들고 ${isMade ? '득점 인정 수신호' : '자유투 개수 표시'}.<br>
+                       <span class="step-title">② 본부석 리포팅:</span>
+                       - "${defense} ${pDef}, 슛 파울! 자유투 ${isMade ? '1개' : '2개'}!"`;
+            } else {
+                situ = infoHeader + `[일반 파울] <span class="spot-info">${spot}</span>에서 수비 중인 <strong>${defense}팀 ${pDef}</strong>가 공격자 ${offense}팀 ${pOff}에게 <span class="highlight">${foul}</span> 파울! 당신은 <strong>${mech}</strong>입니다.`;
+                ans = `<span class="step-title">① 현장 판정:</span>
+                       - 주먹 높게! 파울 종류 수신호 후 즉시 <span class="possession">${offense}팀 방향</span> 지시.<br>
+                       <span class="step-title">② 리포팅:</span>
+                       - "${defense} ${pDef}, ${foul}! <span class="possession">${offense}볼!</span>" 외치며 방향 지시.<br>
+                       <span class="step-title">③ 재개:</span>
+                       - <strong>${spot}</strong>에서 가장 가까운 라인에서 드로우인.`;
+            }
+        } 
+        else if (scenarioRand < 0.8) { // 2. 바이얼레이션 (빈도 높음)
+            const vio = getRand(["트래블링", "아웃 오브 바운드", "더블 드리블", "3초 위반"]);
+            situ = infoHeader + `[바이얼레이
