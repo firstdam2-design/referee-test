@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FIBA 심판 트레이너 v4.3</title>
+    <title>FIBA 심판 트레이너 v4.5</title>
     <style>
         body { font-family: -apple-system, 'Malgun Gothic', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #121212; color: #ffffff; }
         .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 92%; max-width: 550px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -11,15 +11,13 @@
         .official-tag { color: #3498db; font-weight: bold; font-size: 1rem; margin-bottom: 10px; display: block; border-bottom: 1px solid #333; padding-bottom: 10px; }
         h2 { color: #f39c12; font-size: 1.4rem; margin: 10px 0; }
         #box { min-height: 240px; margin: 20px 0; padding: 20px; background: #262626; text-align: left; line-height: 1.8; font-size: 1.1rem; border-radius: 12px; border-left: 6px solid #f39c12; }
-        #answer-box { display: none; background: #2c3e50; padding: 20px; border-radius: 12px; text-align: left; font-size: 1rem; margin-bottom: 20px; border: 1px dashed #3498db; color: #ecf0f1; max-height: 400px; overflow-y: auto; }
+        #answer-box { display: none; background: #2c3e50; padding: 20px; border-radius: 12px; text-align: left; font-size: 1rem; margin-bottom: 20px; border: 1px dashed #3498db; color: #ecf0f1; max-height: 500px; overflow-y: auto; }
         .btn-group { display: flex; gap: 10px; flex-direction: column; }
         @media (min-width: 480px) { .btn-group { flex-direction: row; } }
         button { flex: 1; padding: 18px; font-size: 1.1rem; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.1s; background: #444; color: white; }
         .btn-main { background: #f39c12; color: white; }
         .btn-main:hover { background: #e67e22; }
         .btn-sub { background: #3498db; color: white; display: none; }
-        .btn-sub:hover { background: #2980b9; }
-        button:active { transform: scale(0.96); opacity: 0.9; }
         .highlight { color: #ff5555; font-weight: bold; }
         .possession { color: #2ecc71; font-weight: bold; }
         .step-title { color: #f1c40f; font-weight: bold; display: block; margin-top: 15px; border-left: 4px solid #f1c40f; padding-left: 10px; }
@@ -30,9 +28,9 @@
 <body>
 
 <div class="container">
-    <span class="official-tag" id="off-display">v4.3 | 실전 판정 집중 모드</span>
+    <span class="official-tag" id="off-display">v4.5 | 슈팅 파울 & 자유투 관리</span>
     <h2>🏀 경기 운영 마스터</h2>
-    <div id="box">상황 발생 버튼을 눌러주세요! <br>(파울/바이얼레이션 빈도 상향)</div>
+    <div id="box">상황 발생 버튼을 눌러주세요!</div>
     <div id="answer-box"></div>
     <div class="btn-group">
         <button type="button" class="btn-main" onclick="generate()">상황 발생!</button>
@@ -45,15 +43,13 @@
     const CONFIG = {
         colors: ["화이트", "블랙", "블루", "레드", "오렌지", "옐로"],
         players: ["4번", "7번", "11번", "23번", "30번"],
-        spots: ["오른쪽 45도 사이드라인", "왼쪽 베이스라인 부근", "자유투 라인 연장선 사이드라인", "하프라인 부근", "페인트존 정면"],
-        positions: ["Crew Chief (주심)", "Umpire (부심)"],
+        spots: ["오른쪽 45도", "왼쪽 코너", "정면 3점 라인 밖", "골밑 페인트존"],
         mechanics: ["Lead", "Trail"]
     };
 
     function getRand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
     function generate() {
-        const role = getRand(CONFIG.positions);
         const mech = getRand(CONFIG.mechanics);
         const offense = getRand(CONFIG.colors); 
         let defense = getRand(CONFIG.colors); while(defense === offense) { defense = getRand(CONFIG.colors); }
@@ -66,32 +62,55 @@
 
         const infoHeader = `<div class="team-info">공격: <strong>${offense}</strong> | 수비: <strong>${defense}</strong></div><br>`;
 
-        // --- 확률 분포 조정 ---
-        // 0.0 ~ 0.45: 일반 파울 (45%)
-        // 0.45 ~ 0.8: 바이얼레이션 (35%)
-        // 0.8 ~ 1.0: 경기 운영/특수 상황 (20%)
+        if (scenarioRand < 0.4) { // [슈팅 파울 발생]
+            const is3pt = spot.includes("3점");
+            const isMade = Math.random() > 0.5;
+            const ftCount = isMade ? 1 : (is3pt ? 3 : 2);
 
-        if (scenarioRand < 0.45) { // 1. 일반 파울 및 슛 파울 (빈도 높음)
-            const isShootFoul = Math.random() > 0.7;
-            const foul = getRand(["푸싱", "홀딩", "핸드체크", "블로킹"]);
+            situ = infoHeader + `[슈팅 파울] <span class="spot-info">${spot}</span>에서 <strong>${offense}팀 ${pOff}</strong>의 슈팅 동작 중 <strong>${defense}팀 ${pDef}</strong>의 <span class="highlight">반칙</span>! 결과는 <strong>${isMade ? '득점 성공' : '실패'}</strong>입니다. 당신은 <strong>Lead</strong> 심판입니다.`;
             
-            if(isShootFoul) {
-                const isMade = Math.random() > 0.5;
-                situ = infoHeader + `[슛 파울] <span class="spot-info">골밑</span>에서 수비 중인 <strong>${defense}팀 ${pDef}</strong>가 슛 시도 중인 ${offense}팀 ${pOff}에게 <span class="highlight">반칙</span>! 결과는 ${isMade ? '성공' : '실패'}! 당신은 <strong>${mech}</strong>입니다.`;
-                ans = `<span class="step-title">① 현장 시그널:</span>
-                       - 주먹 들고 ${isMade ? '득점 인정 수신호' : '자유투 개수 표시'}.<br>
-                       <span class="step-title">② 본부석 리포팅:</span>
-                       - "${defense} ${pDef}, 슛 파울! 자유투 ${isMade ? '1개' : '2개'}!"`;
-            } else {
-                situ = infoHeader + `[일반 파울] <span class="spot-info">${spot}</span>에서 수비 중인 <strong>${defense}팀 ${pDef}</strong>가 공격자 ${offense}팀 ${pOff}에게 <span class="highlight">${foul}</span> 파울! 당신은 <strong>${mech}</strong>입니다.`;
-                ans = `<span class="step-title">① 현장 판정:</span>
-                       - 주먹 높게! 파울 종류 수신호 후 즉시 <span class="possession">${offense}팀 방향</span> 지시.<br>
-                       <span class="step-title">② 리포팅:</span>
-                       - "${defense} ${pDef}, ${foul}! <span class="possession">${offense}볼!</span>" 외치며 방향 지시.<br>
-                       <span class="step-title">③ 재개:</span>
-                       - <strong>${spot}</strong>에서 가장 가까운 라인에서 드로우인.`;
-            }
+            ans = `<span class="step-title">① 현장 판정:</span>
+                   - 휘슬과 동시에 주먹! ${isMade ? '득점 인정(And-1) 시그널' : '자유투 개수 표시'}.<br>
+                   <span class="step-title">② 본부석 리포팅:</span>
+                   - "${defense} ${pDef}, 슛 파울! 자유투 ${ftCount}개!"<br>
+                   <span class="step-title">③ 자유투 관리 (Lead 심판):</span>
+                   - <strong>위치:</strong> 바스켓 아래 엔드라인(바스켓 반대편) 대기.<br>
+                   - <strong>정렬:</strong> 수비수 3명, 공격수 2명이 레인에 올바르게 섰는지 확인.<br>
+                   - <strong>집행:</strong> 슈터에게 볼 바운드 패스 → 자유투 개수 시그널 표시.<br>
+                   - <strong>주의:</strong> 마지막 자유투 시 시계 가동 준비(Chop 시그널).`;
         } 
-        else if (scenarioRand < 0.8) { // 2. 바이얼레이션 (빈도 높음)
-            const vio = getRand(["트래블링", "아웃 오브 바운드", "더블 드리블", "3초 위반"]);
-            situ = infoHeader + `[바이얼레이
+        else if (scenarioRand < 0.7) { // [일반 파울 - 팀 파울 상황]
+            situ = infoHeader + `[일반 파울] <span class="spot-info">${spot}</span>에서 <strong>${defense}팀</strong>의 5번째 팀 파울이 발생했습니다. <strong>${offense}팀 ${pOff}</strong>가 반칙을 당했습니다. 당신은 <strong>Trail</strong> 심판입니다.`;
+            ans = `<span class="step-title">① 리포팅:</span>
+                   - "${defense}팀 파울! 자유투 2개!"<br>
+                   <span class="step-title">② 자유투 관리 (Trail 심판):</span>
+                   - <strong>위치:</strong> 자유투 라인 연장선 사이드라인 대기.<br>
+                   - <strong>임무:</strong> 슈터의 바이얼레이션(라인 밟기) 및 상단 선수들의 침범 감시.<br>
+                   - <strong>집행:</strong> 자유투 개수 수신호 유지 및 득점 여부 확인.`;
+        }
+        else { // [바이얼레이션 및 드로우인]
+            const vio = getRand(["트래블링", "더블 드리블"]);
+            situ = infoHeader + `[바이얼레이션] <span class="spot-info">${spot}</span>에서 <strong>${offense}팀 ${pOff}</strong>의 <span class="highlight">${vio}</span> 발생! 당신은 <strong>${mech}</strong>입니다.`;
+            ans = `<span class="step-title">① 리포팅:</span>
+                   - "${offense} ${vio}! <span class="possession">${defense}볼!</span>" (방향 지시)<br>
+                   <span class="step-title">② 드로우인 재개:</span>
+                   - <strong>위치:</strong> ${spot}에서 가장 가까운 경계선.<br>
+                   - <strong>집행:</strong> 수비수 거리 확인 후 <span class="possession">${defense}팀</span> 드로우인 선수에게 볼 전달.`;
+        }
+
+        document.getElementById('off-display').innerText = `v4.5 | 특화: 자유투 관리`;
+        document.getElementById('box').innerHTML = situ;
+        document.getElementById('answer-box').style.display = "none";
+        document.getElementById('ans-btn').style.display = "block";
+        currentAns = ans;
+    }
+
+    function show() {
+        const aBox = document.getElementById('answer-box');
+        aBox.innerHTML = currentAns;
+        aBox.style.display = "block";
+        document.getElementById('ans-btn').style.display = "none";
+    }
+</script>
+</body>
+</html>
