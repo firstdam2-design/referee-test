@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FIBA 2심제 판정 시뮬레이터</title>
+    <style>
+        /* 모바일 최적화 다크 모드 디자인 */
+        body { font-family: -apple-system, 'Malgun Gothic', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #121212; color: #ffffff; overflow: hidden; }
+        .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 90%; max-width: 450px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .official-tag { color: #3498db; font-weight: bold; font-size: 0.9rem; margin-bottom: 10px; display: block; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        h2 { color: #f39c12; font-size: 1.2rem; margin: 10px 0; }
+        #box { min-height: 180px; margin: 15px 0; padding: 18px; background: #262626; text-align: left; line-height: 1.7; font-size: 1.05rem; border-radius: 12px; border-left: 5px solid #f39c12; }
+        #answer-box { display: none; background: #2c3e50; padding: 15px; border-radius: 10px; text-align: left; font-size: 0.9rem; margin-bottom: 15px; border: 1px dashed #3498db; color: #ecf0f1; }
+        .btn-group { display: flex; gap: 8px; }
+        button { flex: 1; padding: 16px; font-size: 1rem; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.1s; -webkit-tap-highlight-color: transparent; }
+        .btn-main { background: #f39c12; color: white; }
+        .btn-sub { background: #3498db; color: white; display: none; }
+        button:active { transform: scale(0.96); opacity: 0.8; }
+        .highlight { color: #ff5555; font-weight: bold; }
+        .possession { color: #2ecc71; font-weight: bold; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <span class="official-tag" id="off-display">포지션: 대기 중</span>
+    <h2>🏀 FIBA 판정 트레이닝</h2>
+    <div id="box">준비되셨나요? 하단 버튼을 눌러 상황을 생성하고 휘슬을 부세요!</div>
+    <div id="answer-box"></div>
+    <div class="btn-group">
+        <button class="btn-main" onclick="generate()">상황 발생!</button>
+        <button id="ans-btn" class="btn-sub" onclick="show()">정답 확인</button>
+    </div>
+</div>
+
+<script>
+    const colors = ["화이트", "블랙", "블루", "레드", "오렌지", "옐로", "그레이", "퍼플"];
+    const players = ["4번", "7번", "11번", "23번", "30번"];
+    let currentAns = ""; // 전역 변수 대신 스코프 변수 사용
+
+    function getRand(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generate() {
+        const isLead = Math.random() > 0.5;
+        const offName = isLead ? "Lead (엔드라인)" : "Trail (45도 외곽)";
+        
+        const teamA = getRand(colors); // 위반팀
+        let teamB = getRand(colors);   // 상대팀
+        while(teamB === teamA) { teamB = getRand(colors); }
+        
+        const playerA = getRand(players);
+        const playerB = getRand(players);
+
+        let situ = "";
+        let ans = "";
+        const typeRand = Math.random();
+
+        // 1. 바이얼레이션 케이스
+        if (typeRand < 0.3) {
+            const vio = isLead ? getRand(["3초 위반", "아웃 오브 바운드"]) : getRand(["8초 위반", "트래블링", "더블 드리블"]);
+            situ = `[상황] <strong>${teamA}팀 ${playerA}</strong> 선수가 ${isLead ? "골밑" : "외곽"}에서 <span class="highlight">${vio}</span>을(를) 범했습니다!`;
+            ans = `<b>[행동 요령]</b><br>1. 휘슬과 동시에 손바닥을 펴서 시계 정지!<br>2. <b>방향 지시:</b> <span class="possession">${teamB}팀</span> 공격 방향을 가리킴<br>3. <b>리포팅:</b> "${teamA} ${playerA}, ${vio}!"`;
+        } 
+        // 2. 일반 파울 케이스
+        else if (typeRand < 0.65) {
+            const foul = isLead ? getRand(["블로킹", "푸싱", "차징"]) : getRand(["홀딩", "하킹", "핸드체크"]);
+            situ = `[상황] <strong>${teamA}팀 ${playerA}</strong>가 ${teamB}팀 ${playerB}에게 ${isLead ? "포스트업 도중" : "드라이브인 저지 중"} <span class="highlight">${foul} 파울</span>을 범했습니다.`;
+            ans = `<b>[행동 요령]</b><br>1. 휘슬과 동시에 주먹 쥐고 시계 정지!<br>2. <b>방향 지시:</b> <span class="possession">${teamB}팀</span> 공격 방향 가리킴<br>3. <b>리포팅:</b> "${teamA} ${playerA}, ${foul}, ${teamB} 볼!"`;
+        } 
+        // 3. 슛 파울 케이스
+        else {
+            const isMade = Math.random() > 0.5;
+            situ = `[상황] <span class="possession">${teamB}팀 ${playerB}</span>의 레이업 시도! <span class="highlight">${teamA}팀 ${playerA}</span>가 팔을 쳤습니다! 슛 결과는 ${isMade ? "성공!" : "실패!"}`;
+            const ftCount = isMade ? "1개" : "2개";
+            ans = `<b>[행동 요령]</b><br>1. <b>판정:</b> ${isMade ? "득점 인정(앤드원) 시그널" : "자유투 2개 표시"}<br>2. <b>리포팅:</b> "${teamA} ${playerA}, 슛 파울, 자유투 ${ftCount}!"<br>3. <b>이후:</b> ${teamB}팀 자유투 준비`;
+        }
+
+        // 화면 업데이트
+        document.getElementById('off-display').innerText = `포지션: ${offName}`;
+        document.getElementById('box').innerHTML = situ;
+        document.getElementById('answer-box').style.display = "none";
+        document.getElementById('ans-btn').style.display = "block";
+        currentAns = ans;
+    }
+
+    function show() {
+        const aBox = document.getElementById('answer-box');
+        aBox.innerHTML = currentAns;
+        aBox.style.display = "block";
+        document.getElementById('ans-btn').style.display = "none";
+    }
+</script>
+</body>
+</html>
