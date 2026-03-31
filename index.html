@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FIBA 심판 트레이너 v3.2</title>
+    <title>FIBA 심판 트레이너 v3.1 (Updated)</title>
     <style>
         body { font-family: -apple-system, 'Malgun Gothic', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #121212; color: #ffffff; }
         .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 92%; max-width: 450px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         @media (min-width: 768px) { .container { max-width: 650px; padding: 40px; } }
         .official-tag { color: #3498db; font-weight: bold; font-size: 0.9rem; margin-bottom: 10px; display: block; border-bottom: 1px solid #333; padding-bottom: 8px; }
         h2 { color: #f39c12; font-size: 1.3rem; margin: 10px 0; }
-        #box { min-height: 180px; margin: 15px 0; padding: 18px; background: #262626; text-align: left; line-height: 1.7; font-size: 1.05rem; border-radius: 12px; border-left: 6px solid #f39c12; }
+        #box { min-height: 180px; margin: 15px 0; padding: 18px; background: #262626; text-align: left; line-height: 1.7; font-size: 1.05rem; border-radius: 12px; border-left: 5px solid #f39c12; }
         #answer-box { display: none; background: #2c3e50; padding: 15px; border-radius: 10px; text-align: left; font-size: 0.9rem; margin-bottom: 15px; border: 1px dashed #3498db; color: #ecf0f1; }
         .btn-group { display: flex; gap: 8px; flex-direction: column; }
         @media (min-width: 480px) { .btn-group { flex-direction: row; } }
@@ -19,16 +19,16 @@
         .btn-sub { background: #3498db; color: white; display: none; }
         button:active { transform: scale(0.96); opacity: 0.8; }
         .highlight { color: #ff5555; font-weight: bold; }
-        .possession { color: #2ecc71; font-weight: bold; border: 1px solid #2ecc71; padding: 1px 4px; border-radius: 3px; }
-        .step-title { color: #f1c40f; font-weight: bold; display: block; margin-top: 10px; border-left: 3px solid #f1c40f; padding-left: 8px; }
+        .possession { color: #2ecc71; font-weight: bold; }
+        .step-title { color: #f1c40f; font-weight: bold; display: block; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <span class="official-tag" id="off-display">v3.2 | 실전 방향지시 모드</span>
+    <span class="official-tag" id="off-display">v3.1 | 리포팅 강화 모드</span>
     <h2>🏀 FIBA 실전 판정 연습</h2>
-    <div id="box">준비되셨나요? 상황 발생 후 즉시 방향을 가리키세요!</div>
+    <div id="box">준비되셨나요? 버튼을 눌러 상황을 확인하고 휘슬을 부세요!</div>
     <div id="answer-box"></div>
     <div class="btn-group">
         <button class="btn-main" onclick="generate()">상황 발생!</button>
@@ -40,4 +40,29 @@
     const CONFIG = {
         colors: ["화이트", "블랙", "블루", "레드", "오렌지", "옐로", "그레이", "퍼플"],
         players: ["4번", "7번", "11번", "23번", "30번"],
-        foulTypes: ["블로킹", "푸싱", "홀딩", "일리걸 유즈 오브 핸즈
+        fouls: {
+            lead: ["블로킹", "푸싱", "차징"],
+            trail: ["홀딩", "하킹", "핸드체크"]
+        },
+        violations: {
+            lead: ["3초 위반", "아웃 오브 바운드"],
+            trail: ["트래블링", "더블 드리블", "8초 위반"]
+        }
+    };
+
+    let currentAns = "";
+
+    function getRand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function generate() {
+        const isLead = Math.random() > 0.5;
+        const offName = isLead ? "Lead (엔드라인)" : "Trail (사이드라인)";
+        const tA = getRand(CONFIG.colors); 
+        let tB = getRand(CONFIG.colors); while(tB === tA) { tB = getRand(CONFIG.colors); }
+        const pA = getRand(CONFIG.players); const pB = getRand(CONFIG.players);
+
+        let situ = ""; let ans = "";
+        const typeRand = Math.random();
+
+        if (typeRand < 0.3) { // 바이얼레이션
+            const vio = isLead ? getRand(CONFIG.violations.lead) :
