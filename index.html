@@ -3,21 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FIBA 심판 트레이너 v3.1 (Updated)</title>
+    <title>FIBA 심판 트레이너 v3.1</title>
     <style>
+        /* [UI 관리] 반응형 디자인 설정 */
         body { font-family: -apple-system, 'Malgun Gothic', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #121212; color: #ffffff; }
         .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 92%; max-width: 450px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
         @media (min-width: 768px) { .container { max-width: 650px; padding: 40px; } }
+
         .official-tag { color: #3498db; font-weight: bold; font-size: 0.9rem; margin-bottom: 10px; display: block; border-bottom: 1px solid #333; padding-bottom: 8px; }
         h2 { color: #f39c12; font-size: 1.3rem; margin: 10px 0; }
+        
         #box { min-height: 180px; margin: 15px 0; padding: 18px; background: #262626; text-align: left; line-height: 1.7; font-size: 1.05rem; border-radius: 12px; border-left: 5px solid #f39c12; }
         #answer-box { display: none; background: #2c3e50; padding: 15px; border-radius: 10px; text-align: left; font-size: 0.9rem; margin-bottom: 15px; border: 1px dashed #3498db; color: #ecf0f1; }
+        
         .btn-group { display: flex; gap: 8px; flex-direction: column; }
         @media (min-width: 480px) { .btn-group { flex-direction: row; } }
+
         button { flex: 1; padding: 16px; font-size: 1rem; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.1s; }
         .btn-main { background: #f39c12; color: white; }
         .btn-sub { background: #3498db; color: white; display: none; }
         button:active { transform: scale(0.96); opacity: 0.8; }
+        
         .highlight { color: #ff5555; font-weight: bold; }
         .possession { color: #2ecc71; font-weight: bold; }
         .step-title { color: #f1c40f; font-weight: bold; display: block; margin-top: 10px; }
@@ -26,7 +33,7 @@
 <body>
 
 <div class="container">
-    <span class="official-tag" id="off-display">v3.1 | 리포팅 강화 모드</span>
+    <span class="official-tag" id="off-display">v3.1 | 포지션 대기 중</span>
     <h2>🏀 FIBA 실전 판정 연습</h2>
     <div id="box">준비되셨나요? 버튼을 눌러 상황을 확인하고 휘슬을 부세요!</div>
     <div id="answer-box"></div>
@@ -37,6 +44,7 @@
 </div>
 
 <script>
+    /* [데이터 관리] 여기서 쉽게 수정 가능 */
     const CONFIG = {
         colors: ["화이트", "블랙", "블루", "레드", "오렌지", "옐로", "그레이", "퍼플"],
         players: ["4번", "7번", "11번", "23번", "30번"],
@@ -65,4 +73,32 @@
         const typeRand = Math.random();
 
         if (typeRand < 0.3) { // 바이얼레이션
-            const vio = isLead ? getRand(CONFIG.violations.lead) :
+            const vio = isLead ? getRand(CONFIG.violations.lead) : getRand(CONFIG.violations.trail);
+            situ = `[바이얼레이션] <strong>${tA}팀 ${pA}</strong>의 <span class="highlight">${vio}</span>!`;
+            ans = `<span class="step-title">① 시그널:</span> 손바닥 머리 위로! 방향은 <span class="possession">${tB}팀</span> 쪽.<br><span class="step-title">② 리포팅:</span> "${tA} ${pA}, ${vio}!"`;
+        } else if (typeRand < 0.6) { // 일반 파울
+            const foul = isLead ? getRand(CONFIG.fouls.lead) : getRand(CONFIG.fouls.trail);
+            situ = `[일반 파울] <strong>${tA}팀 ${pA}</strong>가 ${tB}팀 ${pB}에게 <span class="highlight">${foul}</span> 파울!`;
+            ans = `<span class="step-title">① 시그널:</span> 주먹 머리 위로! 방향은 <span class="possession">${tB}팀</span> 쪽.<br><span class="step-title">② 리포팅:</span> "${tA} ${pA}, ${foul}, ${tB}볼!"`;
+        } else { // 슛 파울
+            const isMade = Math.random() > 0.5;
+            situ = `[슛 파울] <span class="possession">${tB}팀 ${pB}</span>의 슛 시도! <span class="highlight">${tA}팀 ${pA}</span>의 반칙! 결과는 ${isMade ? "성공!" : "실패!"}`;
+            ans = `<span class="step-title">① 시그널:</span> ${isMade ? '득점 인정(And-1)' : '자유투 지급'} 표시!<br><span class="step-title">② 리포팅:</span> "${tA} ${pA}, 슛 파울, 자유투 ${isMade ? '1개' : '2개'}!"`;
+        }
+
+        document.getElementById('off-display').innerText = `v3.1 | 포지션: ${offName}`;
+        document.getElementById('box').innerHTML = situ;
+        document.getElementById('answer-box').style.display = "none";
+        document.getElementById('ans-btn').style.display = "block";
+        currentAns = ans;
+    }
+
+    function show() {
+        const aBox = document.getElementById('answer-box');
+        aBox.innerHTML = currentAns;
+        aBox.style.display = "block";
+        document.getElementById('ans-btn').style.display = "none";
+    }
+</script>
+</body>
+</html>
