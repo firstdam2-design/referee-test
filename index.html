@@ -3,22 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FIBA Referee Trainer</title>
+    <title>FIBA Referee Trainer v5.5</title>
     <style>
-        /* 깃허브 페이지 모바일 뷰 최적화 */
         body { font-family: -apple-system, sans-serif; background-color: #121212; color: #ffffff; display: flex; justify-content: center; padding-top: 20px; margin: 0; }
         .container { width: 95%; max-width: 600px; background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #333; }
         .official-tag { color: #3498db; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; display: block; }
-        #box { min-height: 250px; background: #262626; border-left: 6px solid #f39c12; padding: 20px; margin: 15px 0; border-radius: 8px; text-align: left; }
+        #box { min-height: 250px; background: #262626; border-left: 6px solid #f39c12; padding: 20px; margin: 15px 0; border-radius: 8px; text-align: left; line-height: 1.7; }
         #answer-box { display: none; background: #2c3e50; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #3498db; font-size: 0.95rem; }
         .btn-group { display: flex; gap: 10px; }
-        button { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        button { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; }
         .btn-main { background: #f39c12; color: white; }
         .btn-sub { background: #3498db; color: white; display: none; }
-        .situ-label { color: #f1c40f; font-size: 0.8rem; font-weight: bold; display: block; }
+        .situ-label { color: #f1c40f; font-size: 0.8rem; font-weight: bold; display: block; margin-top: 10px; }
         .situ-content { margin-bottom: 12px; padding-left: 8px; border-left: 2px solid #444; }
         .highlight { color: #ff5555; font-weight: bold; }
         .possession { color: #2ecc71; font-weight: bold; }
+        .shot-result { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-top: 5px; }
+        .made { background: #2ecc71; color: #000; }
+        .missed { background: #e74c3c; color: #fff; }
         /* 팀 컬러 */
         .color-white { color: #ffffff; }
         .color-black { color: #aaaaaa; }
@@ -31,9 +33,9 @@
 <body>
 
 <div class="container">
-    <span class="official-tag">v5.4 PRO | PCA & Defense First</span>
+    <span class="official-tag">v5.5 | 득점 여부(Made/Missed) 판정 추가</span>
     <h2 style="margin:0; color:#f39c12;">심판 실전 트레이너</h2>
-    <div id="box">준비되셨으면 '상황 발생'을 누르세요.</div>
+    <div id="box">버튼을 눌러 상황을 생성하세요.</div>
     <div id="answer-box"></div>
     <div class="btn-group">
         <button onclick="makeSitu()" class="btn-main">상황 발생!</button>
@@ -51,11 +53,11 @@
             {n:"오렌지", c:"color-orange"}, {n:"옐로", c:"color-yellow"}
         ];
         var leadSpots = [
-            {n:"4구역(골밑)", t:"엔드라인"}, {n:"5구역(우측 코너)", t:"우측 엔드라인"}
+            {n:"4구역(골밑)", t:"엔드라인", type:2}, {n:"5구역(우측 코너)", t:"우측 엔드라인", type:3}
         ];
         var trailSpots = [
-            {n:"1구역(좌측 하프)", t:"좌측 사이드"}, {n:"2구역(좌측 45도)", t:"좌측 사이드"},
-            {n:"3구역(정면)", t:"사이드라인"}, {n:"6구역(우측 45도)", t:"우측 사이드"}
+            {n:"1구역(좌측 하프)", t:"좌측 사이드", type:3}, {n:"2구역(좌측 45도)", t:"좌측 사이드", type:3},
+            {n:"3구역(정면)", t:"사이드라인", type:3}, {n:"6구역(우측 45도)", t:"우측 사이드", type:3}
         ];
 
         var isL = Math.random() > 0.5;
@@ -70,17 +72,38 @@
         var s = `<span class="situ-label">1. 내 위치</span><div class="situ-content"><strong>${isL?'Lead (리드)':'Trail (트레일)'}</strong></div>`;
         s += `<span class="situ-label">2. 팀 정보</span><div class="situ-content">수비: <strong class="${def.c}">${def.n}팀</strong> | 공격: <strong class="${off.c}">${off.n}팀</strong></div>`;
         
-        var isShoot = isL || Math.random() > 0.7;
-        if(Math.random() > 0.3) { // 파울
-            s += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
-                <span style="color:#9b59b6">[${spot.n}]</span> 수비 <strong class="${def.c}">${def.n}팀</strong> ${pD}번의 <span class="highlight">${f}</span> 파울! 
-                ${isShoot ? '<br>(슈팅 동작 중 접촉)' : ''}</div>`;
-            savedAns = `<strong>[판정 가이드]</strong><br>1. "${def.n} ${pD}, ${f}! ${isShoot?'자유투!':'볼!'}"<br>2. ${isShoot?'리포팅 후 스위칭':'가까운 '+spot.t+'에서 드로우인'}`;
+        var rand = Math.random();
+        if(rand < 0.7) { // 파울 상황
+            var isShoot = isL || Math.random() > 0.5;
+            if(isShoot) {
+                var isMade = Math.random() > 0.5;
+                var shotType = spot.type; // 구역에 따른 2점/3점 자동 결정
+                var ftCount = isMade ? 1 : shotType;
+
+                s += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
+                    <span style="color:#9b59b6">[${spot.n}]</span> 수비 <strong class="${def.c}">${def.n}팀</strong> ${pD}번의 <span class="highlight">${f}</span> 파울!<br>
+                    <strong>${shotType}점 슛 시도 중 접촉 발생</strong><br>
+                    <span class="shot-result ${isMade?'made':'missed'}">${isMade?'득점 성공 (COUNT)':'득점 실패 (NO SCORE)'}</span>
+                </div>`;
+
+                savedAns = `<strong>[슈팅 파울 판정 가이드]</strong><br>
+                    1. 휘슬 후 즉시 득점 여부 시그널! ${isMade?'(득점 인정 수신호)':'(득점 무효 수신호)'}<br>
+                    2. 본부석 리포팅: "${def.n} ${pD}, ${f}, 자유투 ${ftCount}개!"<br>
+                    3. ${isL?'리드':'트레일'}인 당신은 리포팅 후 New Trail 위치로 스위칭.`;
+            } else {
+                s += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
+                    <span style="color:#9b59b6">[${spot.n}]</span> 수비 <strong class="${def.c}">${def.n}팀</strong> ${pD}번의 <span class="highlight">${f}</span> 파울! (일반 파울)</div>`;
+                savedAns = `<strong>[일반 파울 판정 가이드]</strong><br>
+                    1. 주먹 들고 방향 지시: "${def.n} ${pD}, ${f}! <span class="possession">${off.n}볼!</span>"<br>
+                    2. ${spot.t}에서 드로우인으로 경기 재개.`;
+            }
         } else { // 바이얼레이션
-            var v = ["트래블링", "더블드리블", "아웃오브바운드"][Math.floor(Math.random()*3)];
+            var v = ["트래블링", "더블드리블", "3초 위반"][Math.floor(Math.random()*3)];
             s += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
                 <span style="color:#9b59b6">[${spot.n}]</span> 공격 <strong class="${off.c}">${off.n}팀</strong>의 <span class="highlight">${v}</span> 위반!</div>`;
-            savedAns = `<strong>[판정 가이드]</strong><br>1. "${off.n} ${v}! <span class="possession">${def.n}볼!</span>"<br>2. ${spot.t}에서 드로우인 집행.`;
+            savedAns = `<strong>[바이얼레이션 가이드]</strong><br>
+                1. 오픈 핸드 시계 정지! "${off.n} ${v}! <span class="possession">${def.n}볼!</span>"<br>
+                2. 가장 가까운 경계선(${spot.t})에서 드로우인 집행.`;
         }
 
         document.getElementById('box').innerHTML = s;
