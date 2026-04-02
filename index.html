@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FIBA 심판 트레이너 v5.1</title>
+    <title>FIBA 심판 트레이너 v5.2</title>
     <style>
         body { font-family: -apple-system, 'Malgun Gothic', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #121212; color: #ffffff; }
         .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 92%; max-width: 650px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -40,9 +40,9 @@
 <body>
 
 <div class="container">
-    <span class="official-tag" id="off-display">v5.1 | 책임 구역(PCA) 최적화</span>
-    <h2>🏀 구역별 심판 메커니즘 훈련</h2>
-    <div id="box">버튼을 눌러 책임 구역 상황을 확인하세요.</div>
+    <span class="official-tag" id="off-display">v5.2 | 수비팀 우선 인지 시스템</span>
+    <h2>🏀 구역별 실전 판정 훈련</h2>
+    <div id="box">버튼을 눌러 상황을 확인하세요.</div>
     <div id="answer-box"></div>
     <div class="btn-group">
         <button type="button" class="btn-main" id="btn-gen">상황 발생!</button>
@@ -61,14 +61,12 @@
             ],
             players: ["4번", "7번", "11번", "23번", "30번"],
             foulTypes: ["푸싱", "홀딩", "핸드체킹", "블로킹"],
-            // 리드 구역 (4, 5번)
             leadSpots: [
                 { name: "제 4구역 (페인트존 정면 및 골밑)", throwIn: "가까운 엔드라인" },
                 { name: "제 5구역 (오른쪽 코너 및 엔드라인 부근)", throwIn: "오른쪽 엔드라인" }
             ],
-            // 트레일 구역 (1, 2, 3, 6번)
             trailSpots: [
-                { name: "제 1구역 (왼쪽 사이드라인 하프라인 부근)", throwIn: "왼쪽 사이드라인" },
+                { name: "제 1구역 (왼쪽 하프라인 부근)", throwIn: "왼쪽 사이드라인" },
                 { name: "제 2구역 (왼쪽 45도 외곽)", throwIn: "왼쪽 사이드라인" },
                 { name: "제 3구역 (정면 탑 지역)", throwIn: "가까운 사이드라인" },
                 { name: "제 6구역 (오른쪽 45도 외곽)", throwIn: "오른쪽 사이드라인" }
@@ -96,57 +94,27 @@
             let situHtml = ""; let ansHtml = "";
             const scenarioRand = Math.random();
 
+            // 1. 내 위치
             situHtml += `<span class="situ-label">1. 내 현재 위치</span><div class="situ-content"><span class="role-badge">${myRole}</span></div>`;
-            situHtml += `<span class="situ-label">2. 팀 컬러 및 공수 정보</span><div class="situ-content">공격: <strong class="${offense.class}">${offense.name}팀</strong> | 수비: <strong class="${defense.class}">${defense.name}팀</strong></div>`;
+            
+            // 2. 팀 정보 (수비팀 먼저 배치)
+            situHtml += `<span class="situ-label">2. 팀 컬러 및 공수 정보</span><div class="situ-content">
+                수비: <strong class="${defense.class}">${defense.name}팀</strong> | 
+                공격: <strong class="${offense.class}">${offense.name}팀</strong>
+            </div>`;
 
+            // 3. 세부 상황
             if (scenarioRand < 0.6) { // 파울 상황
-                const isShoot = isLead || Math.random() > 0.7; // 리드일 때 슛 파울 확률 높음
+                const isShoot = isLead || Math.random() > 0.7;
                 const isMade = Math.random() > 0.5;
                 
                 if (isShoot) {
                     situHtml += `<span class="situ-label">3. 상황 세부 정보</span><div class="situ-content">
-                        <span class="area-tag">${spot.name}</span>에서 슛 시도 중인 <span class="${offense.class}">${offense.name}팀</span> ${pOff}에게 
-                        수비 <span class="${defense.class}">${defense.name}팀</span> ${pDef}가 <span class="highlight">${foul}</span> 파울! <br>
+                        <span class="area-tag">${spot.name}</span>에서 수비 <span class="${defense.class}">${defense.name}팀</span> ${pDef}가 
+                        슛 시도 중인 <span class="${offense.class}">${offense.name}팀</span> ${pOff}에게 <span class="highlight">${foul}</span> 파울! <br>
                         결과: <strong>${isMade ? '성공 (And-1)' : '실패'}</strong>
                     </div>`;
                     ansHtml = `<span class="step-title">① 판정 및 리포팅</span>
-                        - 주먹 들고 시계 정지! "${defense.name} ${pDef}, ${foul}, 슛 파울!"<br>
+                        - 주먹 들고 시계 정지! "<span class="${defense.class}">${defense.name}</span> ${pDef}, ${foul}, 슛 파울!"<br>
                         <span class="step-title">② 스위칭 및 프리드로우</span>
-                        - 판정 심판(${isLead?'리드':'트레일'})은 리포팅 후 **New Trail**로 이동.<br>
-                        - **드로우인/자유투:** 자유투 집행 절차에 따라 선수 정렬 후 볼 전달.`;
-                } else {
-                    situHtml += `<span class="situ-label">3. 상황 세부 정보</span><div class="situ-content">
-                        <span class="area-tag">${spot.name}</span>에서 수비 <span class="${defense.class}">${defense.name}팀</span> ${pDef}의 <span class="highlight">${foul}</span> 파울!
-                    </div>`;
-                    ansHtml = `<span class="step-title">① 판정</span>
-                        - "${defense.name} ${pDef}, ${foul}! <span class="possession">${offense.name}볼!</span>" (방향 지시)<br>
-                        <span class="step-title">② 드로우인 위치</span>
-                        - **지점:** <span class="highlight">${spot.throwIn}</span>의 가장 가까운 지점.`;
-                }
-            } else { // 바이얼레이션
-                const vio = getRand(["트래블링", "더블 드리블", "아웃 오브 바운드"]);
-                situHtml += `<span class="situ-label">3. 상황 세부 정보</span><div class="situ-content">
-                    <span class="area-tag">${spot.name}</span>에서 공격자 <span class="${offense.class}">${offense.name}팀</span> ${pOff}의 <span class="highlight">${vio}</span>!
-                </div>`;
-                ansHtml = `<span class="step-title">① 판정</span>
-                    - "${offense.name} ${vio}! <span class="possession">${defense.name}볼!</span>"<br>
-                    <span class="step-title">② 드로우인 위치</span>
-                    - **지점:** 위반이 발생한 <span class="highlight">${spot.throwIn}</span>.`;
-            }
-
-            box.innerHTML = situHtml;
-            answerBox.style.display = "none";
-            btnAns.style.display = "block";
-            currentAns = ansHtml;
-        }
-
-        btnGen.addEventListener('click', generate);
-        btnAns.addEventListener('click', function() {
-            answerBox.innerHTML = currentAns;
-            answerBox.style.display = "block";
-            btnAns.style.display = "none";
-        });
-    })();
-</script>
-</body>
-</html>
+                        - 판정 심판(${isLead?'리드':'트레일
