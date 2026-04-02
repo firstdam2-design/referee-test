@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FIBA 심판 트레이너 v5.2</title>
+    <title>FIBA 심판 트레이너 v5.3</title>
     <style>
         body { font-family: -apple-system, 'Malgun Gothic', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #121212; color: #ffffff; }
         .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 92%; max-width: 650px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -28,7 +28,7 @@
         .role-badge { background: #e74c3c; color: white; padding: 3px 10px; border-radius: 5px; font-size: 1.2rem; }
 
         .color-white { color: #ffffff; }
-        .color-black { color: #aaaaaa; font-weight: 900; }
+        .color-black { color: #aaaaaa; font-weight: bold; }
         .color-blue { color: #3498db; font-weight: bold; }
         .color-red { color: #e74c3c; font-weight: bold; }
         .color-orange { color: #e67e22; font-weight: bold; }
@@ -40,7 +40,7 @@
 <body>
 
 <div class="container">
-    <span class="official-tag" id="off-display">v5.2 | 수비팀 우선 인지 시스템</span>
+    <span class="official-tag" id="off-display">v5.3 | 디버깅 완료</span>
     <h2>🏀 구역별 실전 판정 훈련</h2>
     <div id="box">버튼을 눌러 상황을 확인하세요.</div>
     <div id="answer-box"></div>
@@ -53,6 +53,7 @@
 <script>
     (function() {
         let currentAns = "";
+        
         const CONFIG = {
             teams: [
                 { name: "화이트", class: "color-white" }, { name: "블랙", class: "color-black" },
@@ -68,53 +69,4 @@
             trailSpots: [
                 { name: "제 1구역 (왼쪽 하프라인 부근)", throwIn: "왼쪽 사이드라인" },
                 { name: "제 2구역 (왼쪽 45도 외곽)", throwIn: "왼쪽 사이드라인" },
-                { name: "제 3구역 (정면 탑 지역)", throwIn: "가까운 사이드라인" },
-                { name: "제 6구역 (오른쪽 45도 외곽)", throwIn: "오른쪽 사이드라인" }
-            ]
-        };
-
-        const box = document.getElementById('box');
-        const answerBox = document.getElementById('answer-box');
-        const btnGen = document.getElementById('btn-gen');
-        const btnAns = document.getElementById('btn-ans');
-
-        function getRand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-        function generate() {
-            const isLead = Math.random() > 0.5;
-            const myRole = isLead ? "Lead (리드)" : "Trail (트레일)";
-            const spot = isLead ? getRand(CONFIG.leadSpots) : getRand(CONFIG.trailSpots);
-            
-            const offense = getRand(CONFIG.teams); 
-            let defense = getRand(CONFIG.teams); while(defense.name === offense.name) { defense = getRand(CONFIG.teams); }
-            const pOff = getRand(CONFIG.players);
-            const pDef = getRand(CONFIG.players);
-            const foul = getRand(CONFIG.foulTypes);
-
-            let situHtml = ""; let ansHtml = "";
-            const scenarioRand = Math.random();
-
-            // 1. 내 위치
-            situHtml += `<span class="situ-label">1. 내 현재 위치</span><div class="situ-content"><span class="role-badge">${myRole}</span></div>`;
-            
-            // 2. 팀 정보 (수비팀 먼저 배치)
-            situHtml += `<span class="situ-label">2. 팀 컬러 및 공수 정보</span><div class="situ-content">
-                수비: <strong class="${defense.class}">${defense.name}팀</strong> | 
-                공격: <strong class="${offense.class}">${offense.name}팀</strong>
-            </div>`;
-
-            // 3. 세부 상황
-            if (scenarioRand < 0.6) { // 파울 상황
-                const isShoot = isLead || Math.random() > 0.7;
-                const isMade = Math.random() > 0.5;
-                
-                if (isShoot) {
-                    situHtml += `<span class="situ-label">3. 상황 세부 정보</span><div class="situ-content">
-                        <span class="area-tag">${spot.name}</span>에서 수비 <span class="${defense.class}">${defense.name}팀</span> ${pDef}가 
-                        슛 시도 중인 <span class="${offense.class}">${offense.name}팀</span> ${pOff}에게 <span class="highlight">${foul}</span> 파울! <br>
-                        결과: <strong>${isMade ? '성공 (And-1)' : '실패'}</strong>
-                    </div>`;
-                    ansHtml = `<span class="step-title">① 판정 및 리포팅</span>
-                        - 주먹 들고 시계 정지! "<span class="${defense.class}">${defense.name}</span> ${pDef}, ${foul}, 슛 파울!"<br>
-                        <span class="step-title">② 스위칭 및 프리드로우</span>
-                        - 판정 심판(${isLead?'리드':'트레일
+                { name: "제 3구역 (정면 탑 지역)", throwIn: "
