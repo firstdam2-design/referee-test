@@ -3,70 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FIBA 심판 트레이너 v5.3</title>
+    <title>FIBA 심판 트레이너 v5.4</title>
     <style>
-        body { font-family: -apple-system, 'Malgun Gothic', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #121212; color: #ffffff; }
-        .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 92%; max-width: 650px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        @media (min-width: 768px) { .container { max-width: 800px; padding: 40px; } }
-        .official-tag { color: #3498db; font-weight: bold; font-size: 1rem; margin-bottom: 10px; display: block; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        h2 { color: #f39c12; font-size: 1.5rem; margin: 10px 0; }
-        
-        #box { min-height: 280px; margin: 20px 0; padding: 30px; background: #262626; text-align: left; line-height: 1.9; font-size: 1.1rem; border-radius: 12px; border-left: 8px solid #f39c12; }
-        .situ-label { display: block; font-weight: bold; color: #f1c40f; margin-bottom: 5px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
-        .situ-content { display: block; margin-bottom: 20px; padding-left: 10px; border-left: 2px solid #444; }
-        
-        #answer-box { display: none; background: #2c3e50; padding: 25px; border-radius: 12px; text-align: left; font-size: 1rem; margin-bottom: 20px; border: 1px dashed #3498db; color: #ecf0f1; max-height: 550px; overflow-y: auto; }
-        .btn-group { display: flex; gap: 10px; flex-direction: column; }
-        @media (min-width: 480px) { .btn-group { flex-direction: row; } }
-        button { flex: 1; padding: 18px; font-size: 1.1rem; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.1s; background: #444; color: white; }
-        .btn-main { background: #f39c12; color: white; }
-        .btn-sub { background: #3498db; color: white; display: none; }
-        
+        body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #121212; color: #ffffff; }
+        .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 92%; max-width: 650px; border: 1px solid #333; }
+        .official-tag { color: #3498db; font-weight: bold; font-size: 0.9rem; margin-bottom: 10px; display: block; }
+        h2 { color: #f39c12; font-size: 1.4rem; margin: 10px 0; }
+        #box { min-height: 280px; margin: 20px 0; padding: 25px; background: #262626; text-align: left; line-height: 1.8; font-size: 1.1rem; border-radius: 12px; border-left: 8px solid #f39c12; overflow: hidden; }
+        #answer-box { display: none; background: #2c3e50; padding: 20px; border-radius: 12px; text-align: left; margin-bottom: 20px; border: 1px dashed #3498db; }
+        .btn-group { display: flex; gap: 10px; }
+        button { flex: 1; padding: 18px; font-size: 1.1rem; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; }
+        .btn-main { background: #f39c12; }
+        .btn-sub { background: #3498db; display: none; }
+        .situ-label { display: block; font-weight: bold; color: #f1c40f; font-size: 0.85rem; margin-bottom: 4px; }
+        .situ-content { display: block; margin-bottom: 15px; padding-left: 10px; border-left: 2px solid #444; }
         .highlight { color: #ff5555; font-weight: bold; }
         .possession { color: #2ecc71; font-weight: bold; }
-        .step-title { color: #f1c40f; font-weight: bold; display: block; margin-top: 15px; border-left: 4px solid #f1c40f; padding-left: 10px; margin-bottom: 8px; }
-        .role-badge { background: #e74c3c; color: white; padding: 3px 10px; border-radius: 5px; font-size: 1.2rem; }
-
+        .role-badge { background: #e74c3c; padding: 2px 8px; border-radius: 4px; }
+        /* 컬러 클래스 */
         .color-white { color: #ffffff; }
-        .color-black { color: #aaaaaa; font-weight: bold; }
-        .color-blue { color: #3498db; font-weight: bold; }
-        .color-red { color: #e74c3c; font-weight: bold; }
-        .color-orange { color: #e67e22; font-weight: bold; }
-        .color-yellow { color: #f1c40f; font-weight: bold; }
-        .color-green { color: #2ecc71; font-weight: bold; }
-        .area-tag { color: #9b59b6; font-weight: bold; font-size: 0.9rem; }
+        .color-black { color: #aaaaaa; }
+        .color-blue { color: #3498db; }
+        .color-red { color: #e74c3c; }
+        .color-orange { color: #e67e22; }
+        .color-yellow { color: #f1c40f; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <span class="official-tag" id="off-display">v5.3 | 디버깅 완료</span>
-    <h2>🏀 구역별 실전 판정 훈련</h2>
-    <div id="box">버튼을 눌러 상황을 확인하세요.</div>
+    <span class="official-tag">v5.4 | 수비 우선 & PCA 최적화</span>
+    <h2>🏀 실전 심판 판정 훈련</h2>
+    <div id="box">아래 '상황 발생' 버튼을 눌러주세요.</div>
     <div id="answer-box"></div>
     <div class="btn-group">
-        <button type="button" class="btn-main" id="btn-gen">상황 발생!</button>
-        <button type="button" id="btn-ans" class="btn-sub">판정 및 드로우인 확인</button>
+        <button type="button" class="btn-main" onclick="generate()">상황 발생!</button>
+        <button type="button" id="btn-ans" class="btn-sub" onclick="showAnswer()">지침 확인</button>
     </div>
 </div>
 
 <script>
-    (function() {
-        let currentAns = "";
-        
-        const CONFIG = {
-            teams: [
-                { name: "화이트", class: "color-white" }, { name: "블랙", class: "color-black" },
-                { name: "블루", class: "color-blue" }, { name: "레드", class: "color-red" },
-                { name: "오렌지", class: "color-orange" }, { name: "옐로", class: "color-yellow" }
-            ],
-            players: ["4번", "7번", "11번", "23번", "30번"],
-            foulTypes: ["푸싱", "홀딩", "핸드체킹", "블로킹"],
-            leadSpots: [
-                { name: "제 4구역 (페인트존 정면 및 골밑)", throwIn: "가까운 엔드라인" },
-                { name: "제 5구역 (오른쪽 코너 및 엔드라인 부근)", throwIn: "오른쪽 엔드라인" }
-            ],
-            trailSpots: [
-                { name: "제 1구역 (왼쪽 하프라인 부근)", throwIn: "왼쪽 사이드라인" },
-                { name: "제 2구역 (왼쪽 45도 외곽)", throwIn: "왼쪽 사이드라인" },
-                { name: "제 3구역 (정면 탑 지역)", throwIn: "
+    // 전역 변수 저장소
+    var currentAns = "";
+
+    function generate() {
+        var teams = [
+            { name: "화이트", cls: "color-white" }, { name: "블랙", cls: "color-black" },
+            { name: "블루", cls: "color-blue" }, { name: "레드", cls: "color-red" },
+            { name: "오렌지", cls: "color-orange" }, { name: "옐로", cls: "color-yellow" }
+        ];
+        var players = ["4번", "7번", "11번", "23번", "30번"];
+        var fouls = ["푸싱", "홀딩", "핸드체킹", "블로킹"];
+        var leadSpots = [
+            { n: "제 4구역 (골밑/페인트존 정면)", t: "가까운 엔드라인" },
+            { n: "제 5구역 (오른쪽 코너/베이스라인)", t: "오른쪽 엔드라인" }
+        ];
+        var trailSpots = [
+            { n: "제 1구역 (왼쪽 하프라인 부근)", t: "왼쪽 사이드라인" },
+            { n: "제 2구역 (왼쪽 45도 외곽)", t: "왼쪽 사이드라인" },
+            { n: "제 3구역 (정면 탑 지역)", t: "가까운 사이드라인" },
+            { n: "제 6구역 (오른쪽 45도 외곽)", t: "오른쪽 사이드라인" }
+        ];
+
+        // 1. 역할 및 구역 결정
+        var isL = Math.random() > 0.5;
+        var role = isL ? "Lead (리드)" : "Trail (트레일)";
+        var spot = isL ? leadSpots[Math.floor(Math.random()*leadSpots.length)] : trailSpots[Math.floor(Math.random()*trailSpots.length)];
+
+        // 2. 팀 결정 (수비 먼저)
+        var offIdx = Math.floor(Math.random()*teams.length);
+        var defIdx; do { defIdx = Math.floor(Math.random()*teams.length); } while(defIdx === offIdx);
+        var off = teams[offIdx];
+        var def = teams[defIdx];
+
+        var pO = players[Math.floor(Math.random()*players.length)];
+        var pD = players[Math.floor(Math.random()*players.length)];
+        var f = fouls[Math.floor(Math.random()*fouls.length)];
+
+        var sHtml = ""; var aHtml = "";
+        var rand = Math.random();
+
+        // 상황 빌드
+        sHtml += `<span class="situ-label">1. 내 현재 위치</span><div class="situ-content"><span class="role-badge">${role}</span></div>`;
+        sHtml += `<span class="situ-label">2. 팀 정보</span><div class="situ-content">수비: <strong class="${def.cls}">${def.name}팀</strong> | 공격: <strong class="${off.cls}">${off.name}팀</strong></div>`;
+
+        if (rand < 0.6) { // 파울 상황
+            var isS = isL || Math.random() > 0.7;
+            var isM = Math.random() > 0.5;
+            if (isS) {
+                sHtml += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
+                    <span style="color:#9b59b6">[${spot.n}]</span> 수비 <strong class="${def.cls}">${def.name}팀</strong> ${pD}가 슛 시도 중인 
+                    공격자 <strong class="${off.cls}">${off.name}팀</strong> ${pO}에게 <span class="highlight">${f}</span> 파울! (결과: ${isM?'성공':'실패'})</div>`;
+                aHtml = `<strong>[슈팅 파울 절차]</strong><br>1. 주먹 들고 시계 정지!<br>2. 리포팅: "${def.name} ${pD}, ${f}, 슛 파울!"<br>3. 스위칭: 리포팅 후 New Trail 위치로 이동.<br>4. 집행: New Lead가 볼 바운드 패스로 자유투 시작.`;
+            } else {
+                sHtml += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
+                    <span style="color:#9b59b6">[${spot.n}]</span> 수비 <strong class="${def.cls}">${def.name}팀</strong> ${pD}의 
+                    일반 <span class="highlight">${f}</span> 파울 발생!</div>`;
+                aHtml = `<strong>[일반 파울 절차]</strong><br>1. "${def.name} ${pD}, ${f}! <span class="possession">${off.name}볼!</span>"<br>2. 드로우인: <span class="highlight">${spot.t}</span>에서 재개.`;
+            }
+        } else { // 바이얼레이션
+            var v = ["트래블링", "더블 드리블", "아웃 오브 바운드"][Math.floor(Math.random()*3)];
+            sHtml += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
+                <span style="color:#9b59b6">[${spot.n}]</span> 공격자 <strong class="${off.cls}">${off.name}팀</strong> ${pO}의 <span class="highlight">${v}</span> 위반!</div>`;
+            aHtml = `<strong>[바이얼레이션 절차]</strong><br>1. 손바닥 펴고 시계 정지!<br>2. "${off.name} ${v}! <span class="possession">${def.name}볼!</span>"<br>3. 드로우인: <span class="highlight">${spot.t}</span>에서 재개.`;
+        }
+
+        document.getElementById('box').innerHTML = sHtml;
+        document.getElementById('answer-box').style.display = "none";
+        document.getElementById('btn-ans').style.display = "block";
+        currentAns = aHtml;
+    }
+
+    function showAnswer() {
+        var ab = document.getElementById('answer-box');
+        ab.innerHTML = currentAns;
+        ab.style.display = "block";
+        document.getElementById('btn-ans').style.display = "none";
+    }
+</script>
+</body>
+</html>
