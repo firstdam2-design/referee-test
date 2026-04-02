@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FIBA 심판 트레이너 v5.4</title>
+    <title>FIBA Referee Trainer</title>
     <style>
-        body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #121212; color: #ffffff; }
-        .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 92%; max-width: 650px; border: 1px solid #333; }
-        .official-tag { color: #3498db; font-weight: bold; font-size: 0.9rem; margin-bottom: 10px; display: block; }
-        h2 { color: #f39c12; font-size: 1.4rem; margin: 10px 0; }
-        #box { min-height: 280px; margin: 20px 0; padding: 25px; background: #262626; text-align: left; line-height: 1.8; font-size: 1.1rem; border-radius: 12px; border-left: 8px solid #f39c12; overflow: hidden; }
-        #answer-box { display: none; background: #2c3e50; padding: 20px; border-radius: 12px; text-align: left; margin-bottom: 20px; border: 1px dashed #3498db; }
+        /* 깃허브 페이지 모바일 뷰 최적화 */
+        body { font-family: -apple-system, sans-serif; background-color: #121212; color: #ffffff; display: flex; justify-content: center; padding-top: 20px; margin: 0; }
+        .container { width: 95%; max-width: 600px; background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #333; }
+        .official-tag { color: #3498db; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; display: block; }
+        #box { min-height: 250px; background: #262626; border-left: 6px solid #f39c12; padding: 20px; margin: 15px 0; border-radius: 8px; text-align: left; }
+        #answer-box { display: none; background: #2c3e50; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #3498db; font-size: 0.95rem; }
         .btn-group { display: flex; gap: 10px; }
-        button { flex: 1; padding: 18px; font-size: 1.1rem; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; }
-        .btn-main { background: #f39c12; }
-        .btn-sub { background: #3498db; display: none; }
-        .situ-label { display: block; font-weight: bold; color: #f1c40f; font-size: 0.85rem; margin-bottom: 4px; }
-        .situ-content { display: block; margin-bottom: 15px; padding-left: 10px; border-left: 2px solid #444; }
+        button { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .btn-main { background: #f39c12; color: white; }
+        .btn-sub { background: #3498db; color: white; display: none; }
+        .situ-label { color: #f1c40f; font-size: 0.8rem; font-weight: bold; display: block; }
+        .situ-content { margin-bottom: 12px; padding-left: 8px; border-left: 2px solid #444; }
         .highlight { color: #ff5555; font-weight: bold; }
         .possession { color: #2ecc71; font-weight: bold; }
-        .role-badge { background: #e74c3c; padding: 2px 8px; border-radius: 4px; }
-        /* 컬러 클래스 */
+        /* 팀 컬러 */
         .color-white { color: #ffffff; }
         .color-black { color: #aaaaaa; }
         .color-blue { color: #3498db; }
@@ -32,93 +31,67 @@
 <body>
 
 <div class="container">
-    <span class="official-tag">v5.4 | 수비 우선 & PCA 최적화</span>
-    <h2>🏀 실전 심판 판정 훈련</h2>
-    <div id="box">아래 '상황 발생' 버튼을 눌러주세요.</div>
+    <span class="official-tag">v5.4 PRO | PCA & Defense First</span>
+    <h2 style="margin:0; color:#f39c12;">심판 실전 트레이너</h2>
+    <div id="box">준비되셨으면 '상황 발생'을 누르세요.</div>
     <div id="answer-box"></div>
     <div class="btn-group">
-        <button type="button" class="btn-main" onclick="generate()">상황 발생!</button>
-        <button type="button" id="btn-ans" class="btn-sub" onclick="showAnswer()">지침 확인</button>
+        <button onclick="makeSitu()" class="btn-main">상황 발생!</button>
+        <button id="ans-btn" onclick="showAns()" class="btn-sub">지침 확인</button>
     </div>
 </div>
 
 <script>
-    // 전역 변수 저장소
-    var currentAns = "";
+    var savedAns = "";
 
-    function generate() {
+    function makeSitu() {
         var teams = [
-            { name: "화이트", cls: "color-white" }, { name: "블랙", cls: "color-black" },
-            { name: "블루", cls: "color-blue" }, { name: "레드", cls: "color-red" },
-            { name: "오렌지", cls: "color-orange" }, { name: "옐로", cls: "color-yellow" }
+            {n:"화이트", c:"color-white"}, {n:"블랙", c:"color-black"},
+            {n:"블루", c:"color-blue"}, {n:"레드", c:"color-red"},
+            {n:"오렌지", c:"color-orange"}, {n:"옐로", c:"color-yellow"}
         ];
-        var players = ["4번", "7번", "11번", "23번", "30번"];
-        var fouls = ["푸싱", "홀딩", "핸드체킹", "블로킹"];
         var leadSpots = [
-            { n: "제 4구역 (골밑/페인트존 정면)", t: "가까운 엔드라인" },
-            { n: "제 5구역 (오른쪽 코너/베이스라인)", t: "오른쪽 엔드라인" }
+            {n:"4구역(골밑)", t:"엔드라인"}, {n:"5구역(우측 코너)", t:"우측 엔드라인"}
         ];
         var trailSpots = [
-            { n: "제 1구역 (왼쪽 하프라인 부근)", t: "왼쪽 사이드라인" },
-            { n: "제 2구역 (왼쪽 45도 외곽)", t: "왼쪽 사이드라인" },
-            { n: "제 3구역 (정면 탑 지역)", t: "가까운 사이드라인" },
-            { n: "제 6구역 (오른쪽 45도 외곽)", t: "오른쪽 사이드라인" }
+            {n:"1구역(좌측 하프)", t:"좌측 사이드"}, {n:"2구역(좌측 45도)", t:"좌측 사이드"},
+            {n:"3구역(정면)", t:"사이드라인"}, {n:"6구역(우측 45도)", t:"우측 사이드"}
         ];
 
-        // 1. 역할 및 구역 결정
         var isL = Math.random() > 0.5;
-        var role = isL ? "Lead (리드)" : "Trail (트레일)";
         var spot = isL ? leadSpots[Math.floor(Math.random()*leadSpots.length)] : trailSpots[Math.floor(Math.random()*trailSpots.length)];
+        
+        var off = teams[Math.floor(Math.random()*teams.length)];
+        var def = teams.filter(t => t.n !== off.n)[Math.floor(Math.random()*(teams.length-1))];
+        
+        var pD = [4, 7, 11, 23, 30][Math.floor(Math.random()*5)];
+        var f = ["푸싱", "홀딩", "핸드체킹", "블로킹"][Math.floor(Math.random()*4)];
 
-        // 2. 팀 결정 (수비 먼저)
-        var offIdx = Math.floor(Math.random()*teams.length);
-        var defIdx; do { defIdx = Math.floor(Math.random()*teams.length); } while(defIdx === offIdx);
-        var off = teams[offIdx];
-        var def = teams[defIdx];
-
-        var pO = players[Math.floor(Math.random()*players.length)];
-        var pD = players[Math.floor(Math.random()*players.length)];
-        var f = fouls[Math.floor(Math.random()*fouls.length)];
-
-        var sHtml = ""; var aHtml = "";
-        var rand = Math.random();
-
-        // 상황 빌드
-        sHtml += `<span class="situ-label">1. 내 현재 위치</span><div class="situ-content"><span class="role-badge">${role}</span></div>`;
-        sHtml += `<span class="situ-label">2. 팀 정보</span><div class="situ-content">수비: <strong class="${def.cls}">${def.name}팀</strong> | 공격: <strong class="${off.cls}">${off.name}팀</strong></div>`;
-
-        if (rand < 0.6) { // 파울 상황
-            var isS = isL || Math.random() > 0.7;
-            var isM = Math.random() > 0.5;
-            if (isS) {
-                sHtml += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
-                    <span style="color:#9b59b6">[${spot.n}]</span> 수비 <strong class="${def.cls}">${def.name}팀</strong> ${pD}가 슛 시도 중인 
-                    공격자 <strong class="${off.cls}">${off.name}팀</strong> ${pO}에게 <span class="highlight">${f}</span> 파울! (결과: ${isM?'성공':'실패'})</div>`;
-                aHtml = `<strong>[슈팅 파울 절차]</strong><br>1. 주먹 들고 시계 정지!<br>2. 리포팅: "${def.name} ${pD}, ${f}, 슛 파울!"<br>3. 스위칭: 리포팅 후 New Trail 위치로 이동.<br>4. 집행: New Lead가 볼 바운드 패스로 자유투 시작.`;
-            } else {
-                sHtml += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
-                    <span style="color:#9b59b6">[${spot.n}]</span> 수비 <strong class="${def.cls}">${def.name}팀</strong> ${pD}의 
-                    일반 <span class="highlight">${f}</span> 파울 발생!</div>`;
-                aHtml = `<strong>[일반 파울 절차]</strong><br>1. "${def.name} ${pD}, ${f}! <span class="possession">${off.name}볼!</span>"<br>2. 드로우인: <span class="highlight">${spot.t}</span>에서 재개.`;
-            }
+        var s = `<span class="situ-label">1. 내 위치</span><div class="situ-content"><strong>${isL?'Lead (리드)':'Trail (트레일)'}</strong></div>`;
+        s += `<span class="situ-label">2. 팀 정보</span><div class="situ-content">수비: <strong class="${def.c}">${def.n}팀</strong> | 공격: <strong class="${off.c}">${off.n}팀</strong></div>`;
+        
+        var isShoot = isL || Math.random() > 0.7;
+        if(Math.random() > 0.3) { // 파울
+            s += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
+                <span style="color:#9b59b6">[${spot.n}]</span> 수비 <strong class="${def.c}">${def.n}팀</strong> ${pD}번의 <span class="highlight">${f}</span> 파울! 
+                ${isShoot ? '<br>(슈팅 동작 중 접촉)' : ''}</div>`;
+            savedAns = `<strong>[판정 가이드]</strong><br>1. "${def.n} ${pD}, ${f}! ${isShoot?'자유투!':'볼!'}"<br>2. ${isShoot?'리포팅 후 스위칭':'가까운 '+spot.t+'에서 드로우인'}`;
         } else { // 바이얼레이션
-            var v = ["트래블링", "더블 드리블", "아웃 오브 바운드"][Math.floor(Math.random()*3)];
-            sHtml += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
-                <span style="color:#9b59b6">[${spot.n}]</span> 공격자 <strong class="${off.cls}">${off.name}팀</strong> ${pO}의 <span class="highlight">${v}</span> 위반!</div>`;
-            aHtml = `<strong>[바이얼레이션 절차]</strong><br>1. 손바닥 펴고 시계 정지!<br>2. "${off.name} ${v}! <span class="possession">${def.name}볼!</span>"<br>3. 드로우인: <span class="highlight">${spot.t}</span>에서 재개.`;
+            var v = ["트래블링", "더블드리블", "아웃오브바운드"][Math.floor(Math.random()*3)];
+            s += `<span class="situ-label">3. 상황 정보</span><div class="situ-content">
+                <span style="color:#9b59b6">[${spot.n}]</span> 공격 <strong class="${off.c}">${off.n}팀</strong>의 <span class="highlight">${v}</span> 위반!</div>`;
+            savedAns = `<strong>[판정 가이드]</strong><br>1. "${off.n} ${v}! <span class="possession">${def.n}볼!</span>"<br>2. ${spot.t}에서 드로우인 집행.`;
         }
 
-        document.getElementById('box').innerHTML = sHtml;
+        document.getElementById('box').innerHTML = s;
         document.getElementById('answer-box').style.display = "none";
-        document.getElementById('btn-ans').style.display = "block";
-        currentAns = aHtml;
+        document.getElementById('ans-btn').style.display = "block";
     }
 
-    function showAnswer() {
-        var ab = document.getElementById('answer-box');
-        ab.innerHTML = currentAns;
-        ab.style.display = "block";
-        document.getElementById('btn-ans').style.display = "none";
+    function showAns() {
+        document.getElementById('answer-box').innerHTML = savedAns;
+        document.getElementById('answer-box').style.display = "block";
+        document.getElementById('ans-btn').style.display = "none";
     }
 </script>
 </body>
