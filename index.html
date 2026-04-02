@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FIBA 심판 트레이너 v5.0</title>
+    <title>FIBA 심판 트레이너 v5.1</title>
     <style>
         body { font-family: -apple-system, 'Malgun Gothic', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #121212; color: #ffffff; }
         .container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 20px; width: 92%; max-width: 650px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -27,26 +27,26 @@
         .step-title { color: #f1c40f; font-weight: bold; display: block; margin-top: 15px; border-left: 4px solid #f1c40f; padding-left: 10px; margin-bottom: 8px; }
         .role-badge { background: #e74c3c; color: white; padding: 3px 10px; border-radius: 5px; font-size: 1.2rem; }
 
-        /* 팀 컬러별 스타일링 */
-        .color-white { color: #ffffff; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
-        .color-black { color: #888888; font-weight: 900; } /* 배경이 검정이므로 회색조로 표시 */
+        .color-white { color: #ffffff; }
+        .color-black { color: #aaaaaa; font-weight: 900; }
         .color-blue { color: #3498db; font-weight: bold; }
         .color-red { color: #e74c3c; font-weight: bold; }
         .color-orange { color: #e67e22; font-weight: bold; }
         .color-yellow { color: #f1c40f; font-weight: bold; }
         .color-green { color: #2ecc71; font-weight: bold; }
+        .area-tag { color: #9b59b6; font-weight: bold; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <span class="official-tag" id="off-display">v5.0 | 팀 컬러 매칭 시스템</span>
-    <h2>🏀 실전 심판 매커니즘 훈련</h2>
-    <div id="box">버튼을 눌러 훈련을 시작하세요.</div>
+    <span class="official-tag" id="off-display">v5.1 | 책임 구역(PCA) 최적화</span>
+    <h2>🏀 구역별 심판 메커니즘 훈련</h2>
+    <div id="box">버튼을 눌러 책임 구역 상황을 확인하세요.</div>
     <div id="answer-box"></div>
     <div class="btn-group">
         <button type="button" class="btn-main" id="btn-gen">상황 발생!</button>
-        <button type="button" class="btn-sub" id="btn-ans">지침 및 절차 확인</button>
+        <button type="button" id="btn-ans" class="btn-sub">판정 및 드로우인 확인</button>
     </div>
 </div>
 
@@ -55,23 +55,24 @@
         let currentAns = "";
         const CONFIG = {
             teams: [
-                { name: "화이트", class: "color-white" },
-                { name: "블랙", class: "color-black" },
-                { name: "블루", class: "color-blue" },
-                { name: "레드", class: "color-red" },
-                { name: "오렌지", class: "color-orange" },
-                { name: "옐로", class: "color-yellow" },
-                { name: "그린", class: "color-green" }
+                { name: "화이트", class: "color-white" }, { name: "블랙", class: "color-black" },
+                { name: "블루", class: "color-blue" }, { name: "레드", class: "color-red" },
+                { name: "오렌지", class: "color-orange" }, { name: "옐로", class: "color-yellow" }
             ],
             players: ["4번", "7번", "11번", "23번", "30번"],
             foulTypes: ["푸싱", "홀딩", "핸드체킹", "블로킹"],
-            spots: [
-                { name: "오른쪽 45도 엘보우 지역", throwIn: "오른쪽 사이드라인" },
-                { name: "왼쪽 코너 엔드라인 부근", throwIn: "왼쪽 엔드라인 (베이스라인)" },
-                { name: "정면 3점 라인 밖 하프라인 부근", throwIn: "가까운 사이드라인" },
-                { name: "페인트존 안쪽 골밑", throwIn: "가까운 엔드라인" }
+            // 리드 구역 (4, 5번)
+            leadSpots: [
+                { name: "제 4구역 (페인트존 정면 및 골밑)", throwIn: "가까운 엔드라인" },
+                { name: "제 5구역 (오른쪽 코너 및 엔드라인 부근)", throwIn: "오른쪽 엔드라인" }
             ],
-            mechanics: ["Lead (리드)", "Trail (트레일)"]
+            // 트레일 구역 (1, 2, 3, 6번)
+            trailSpots: [
+                { name: "제 1구역 (왼쪽 사이드라인 하프라인 부근)", throwIn: "왼쪽 사이드라인" },
+                { name: "제 2구역 (왼쪽 45도 외곽)", throwIn: "왼쪽 사이드라인" },
+                { name: "제 3구역 (정면 탑 지역)", throwIn: "가까운 사이드라인" },
+                { name: "제 6구역 (오른쪽 45도 외곽)", throwIn: "오른쪽 사이드라인" }
+            ]
         };
 
         const box = document.getElementById('box');
@@ -82,69 +83,55 @@
         function getRand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
         function generate() {
-            const myRole = getRand(CONFIG.mechanics);
+            const isLead = Math.random() > 0.5;
+            const myRole = isLead ? "Lead (리드)" : "Trail (트레일)";
+            const spot = isLead ? getRand(CONFIG.leadSpots) : getRand(CONFIG.trailSpots);
+            
             const offense = getRand(CONFIG.teams); 
             let defense = getRand(CONFIG.teams); while(defense.name === offense.name) { defense = getRand(CONFIG.teams); }
             const pOff = getRand(CONFIG.players);
             const pDef = getRand(CONFIG.players);
-            const spot = getRand(CONFIG.spots);
             const foul = getRand(CONFIG.foulTypes);
 
             let situHtml = ""; let ansHtml = "";
             const scenarioRand = Math.random();
 
-            // 1. 내 위치 정보
             situHtml += `<span class="situ-label">1. 내 현재 위치</span><div class="situ-content"><span class="role-badge">${myRole}</span></div>`;
-            
-            // 2. 팀 정보 (컬러 적용)
-            situHtml += `<span class="situ-label">2. 팀 컬러 및 공수 정보</span><div class="situ-content">
-                공격: <strong class="${offense.class}">${offense.name}팀</strong> | 
-                수비: <strong class="${defense.class}">${defense.name}팀</strong>
-            </div>`;
+            situHtml += `<span class="situ-label">2. 팀 컬러 및 공수 정보</span><div class="situ-content">공격: <strong class="${offense.class}">${offense.name}팀</strong> | 수비: <strong class="${defense.class}">${defense.name}팀</strong></div>`;
 
-            // 3. 상황 세부 정보
-            if (scenarioRand < 0.5) { // 슈팅 파울
-                const is3pt = Math.random() > 0.7;
+            if (scenarioRand < 0.6) { // 파울 상황
+                const isShoot = isLead || Math.random() > 0.7; // 리드일 때 슛 파울 확률 높음
                 const isMade = Math.random() > 0.5;
-                const ftCount = isMade ? 1 : (is3pt ? 3 : 2);
                 
+                if (isShoot) {
+                    situHtml += `<span class="situ-label">3. 상황 세부 정보</span><div class="situ-content">
+                        <span class="area-tag">${spot.name}</span>에서 슛 시도 중인 <span class="${offense.class}">${offense.name}팀</span> ${pOff}에게 
+                        수비 <span class="${defense.class}">${defense.name}팀</span> ${pDef}가 <span class="highlight">${foul}</span> 파울! <br>
+                        결과: <strong>${isMade ? '성공 (And-1)' : '실패'}</strong>
+                    </div>`;
+                    ansHtml = `<span class="step-title">① 판정 및 리포팅</span>
+                        - 주먹 들고 시계 정지! "${defense.name} ${pDef}, ${foul}, 슛 파울!"<br>
+                        <span class="step-title">② 스위칭 및 프리드로우</span>
+                        - 판정 심판(${isLead?'리드':'트레일'})은 리포팅 후 **New Trail**로 이동.<br>
+                        - **드로우인/자유투:** 자유투 집행 절차에 따라 선수 정렬 후 볼 전달.`;
+                } else {
+                    situHtml += `<span class="situ-label">3. 상황 세부 정보</span><div class="situ-content">
+                        <span class="area-tag">${spot.name}</span>에서 수비 <span class="${defense.class}">${defense.name}팀</span> ${pDef}의 <span class="highlight">${foul}</span> 파울!
+                    </div>`;
+                    ansHtml = `<span class="step-title">① 판정</span>
+                        - "${defense.name} ${pDef}, ${foul}! <span class="possession">${offense.name}볼!</span>" (방향 지시)<br>
+                        <span class="step-title">② 드로우인 위치</span>
+                        - **지점:** <span class="highlight">${spot.throwIn}</span>의 가장 가까운 지점.`;
+                }
+            } else { // 바이얼레이션
+                const vio = getRand(["트래블링", "더블 드리블", "아웃 오브 바운드"]);
                 situHtml += `<span class="situ-label">3. 상황 세부 정보</span><div class="situ-content">
-                    <span class="spot-info">${spot.name}</span>에서 <span class="${offense.class}">${offense.name}팀</span> ${pOff}의 <strong>${is3pt ? '3점' : '2점'} 슛</strong> 시도 중, 
-                    수비 <span class="${defense.class}">${defense.name}팀</span> ${pDef}가 <span class="highlight">${foul}</span> 반칙을 범함. <br>
-                    공격 결과: <strong>${isMade ? '득점 성공 (And-1)' : '득점 실패'}</strong>
+                    <span class="area-tag">${spot.name}</span>에서 공격자 <span class="${offense.class}">${offense.name}팀</span> ${pOff}의 <span class="highlight">${vio}</span>!
                 </div>`;
-
-                ansHtml = `<span class="step-title">① 판정 및 스위칭</span>
-                    - 휘슬 후 리포팅 수행. 판정한 심판(${myRole})은 **New Trail** 위치로 이동하며 파트너와 스위칭.<br>
-                    <span class="step-title">② 프리드로우 관리</span>
-                    - **New Lead:** 바스켓 아래에서 볼 전달 및 리바운더 관리.<br>
-                    - **New Trail(나):** 자유투 라인 연장선에서 슈터 위반 및 득점 확인.<br>
-                    <span class="step-title">③ 리포팅 문구</span>
-                    - "<span class="${defense.class}">${defense.name}</span> ${pDef}, ${foul}, 슛 파울! 자유투 ${ftCount}개!"`;
-            } 
-            else if (scenarioRand < 0.8) { // 일반 파울
-                situHtml += `<span class="situ-label">3. 상황 세부 정보</span><div class="situ-content">
-                    <span class="spot-info">${spot.name}</span>에서 수비 <span class="${defense.class}">${defense.name}팀</span> ${pDef}가 
-                    공격자 <span class="${offense.class}">${offense.name}팀</span> ${pOff}에게 <span class="highlight">${foul}</span> 파울 발생!
-                </div>`;
-
-                ansHtml = `<span class="step-title">① 판정 및 리포팅</span>
-                    - 주먹 들고 시계 정지! "<span class="${defense.class}">${defense.name}</span> ${pDef}, ${foul}! <span class="possession">${offense.name}볼!</span>" (방향 지시)<br>
-                    <span class="step-title">② 드로우인 재개</span>
-                    - **지점:** <span class="highlight">${spot.throwIn}</span>의 가장 가까운 지점.<br>
-                    - **메커니즘:** 리포팅 후 새로운 위치로 이동하여 드로우인 집행.`;
-            }
-            else { // 바이얼레이션
-                const vio = getRand(["트래블링", "더블 드리블", "3초 위반"]);
-                situHtml += `<span class="situ-label">3. 상황 세부 정보</span><div class="situ-content">
-                    <span class="spot-info">${spot.name}</span>에서 공격자 <span class="${offense.class}">${offense.name}팀</span> ${pOff}가 
-                    <span class="highlight">${vio}</span> 바이얼레이션 범함!
-                </div>`;
-
-                ansHtml = `<span class="step-title">① 판정 및 리포팅</span>
-                    - 손바닥 펴서 시계 정지! "<span class="${offense.class}">${offense.name}</span> ${vio}! <span class="possession">${defense.name}볼!</span>" (방향 지시)<br>
+                ansHtml = `<span class="step-title">① 판정</span>
+                    - "${offense.name} ${vio}! <span class="possession">${defense.name}볼!</span>"<br>
                     <span class="step-title">② 드로우인 위치</span>
-                    - **지점:** <span class="highlight">${spot.throwIn}</span>에서 가장 가까운 라인.`;
+                    - **지점:** 위반이 발생한 <span class="highlight">${spot.throwIn}</span>.`;
             }
 
             box.innerHTML = situHtml;
